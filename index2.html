@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лабораторная работа 1</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #f5f7fa;
+            font-family: 'Times New Roman', Times, serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        /* Заголовок */
+        header {
+            background: #625acc;
+            color: white;
+            padding: 1.5rem 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Основной контент */
+        main {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Секции */
+        section {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 2px solid #625acc;
+        }
+
+        section h2 {
+            color: #625acc;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #625acc;
+        }
+
+        /* Заголовки статей */
+        article h3 {
+            color: #625acc;
+            font-size: 1.2rem;
+            margin-bottom: 0.75rem;
+        }
+
+        /* Анекдоты */
+        .joke-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .joke-container:last-child {
+            margin-bottom: 0;
+        }
+
+        .joke-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin: 0.5rem 0;
+            display: block;
+        }
+
+        .joke-text {
+            background: #f0f4ff;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid #625acc;
+            font-size: 1rem;
+        }
+
+        /* Фильм */
+        .movie-section {
+            display: flex;
+            align-items: flex-start;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .movie-image {
+            flex: 0 0 250px;
+            max-width: 100%;
+            border-radius: 8px;
+        }
+
+        .movie-description {
+            flex: 1;
+            min-width: 250px;
+            font-size: 1rem;
+            text-align: justify;
+        }
+
+        /* Отзыв */
+        .review-section {
+            background: #fff9e6;
+            font-style: italic;
+            padding: 1.5rem;
+            border-left: 4px solid #625acc;
+        }
+
+        /* Цитаты */
+        .quotes-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .quotes-list li {
+            background: #f8faff;
+            margin-bottom: 0.75rem;
+            padding: 1rem 1rem 1rem 2.5rem;
+            border-radius: 6px;
+            border-left: 3px solid #625acc;
+            position: relative;
+        }
+
+        .quotes-list li::before {
+            content: '«';
+            position: absolute;
+            left: 0.75rem;
+            font-size: 1.5rem;
+            color: #625acc;
+            font-weight: bold;
+        }
+
+        /* Таблица */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0.5rem;
+            font-family: sans-serif;
+        }
+
+        thead {
+            background: #dc143c;
+            color: white;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        tbody tr:hover {
+            background: #f5f7ff;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #fafafa;
+        }
+
+        .score {
+            font-weight: bold;
+            color: #625acc;
+        }
+
+        .preview {
+            color: #2ed573;
+            font-weight: 600;
+        }
+
+        /* Футер */
+        footer {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: #625acc;
+            color: white;
+            border-radius: 10px;
+            text-align: center;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.5rem;
+            }
+            
+            section {
+                padding: 1rem;
+            }
+            
+            section h2 {
+                font-size: 1.3rem;
+            }
+            
+            .movie-section {
+                flex-direction: column;
+            }
+            
+            .movie-image {
+                flex: 0 0 auto;
+                width: 100%;
+            }
+            
+            table {
+                font-size: 0.9rem;
+            }
+            
+            th, td {
+                padding: 0.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 1rem 0.5rem;
+            }
+            
+            header {
+                padding: 1rem;
+            }
+            
+            section h2 {
+                font-size: 1.2rem;
+            }
+            
+            .quotes-list li {
+                padding: 0.75rem 0.75rem 0.75rem 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>лабораторная работа</h1>
+    </header>
+
+    <main>
+        <section aria-labelledby="jokes-heading">
+            <h2 id="jokes-heading">Анекдоты</h2>
+            
+            <article class="joke-container">
+                <h3>Настоящий друг</h3>
+                <img 
+                    src="https://otvet.imgsmail.ru/download/300780861_78844fd2e46332116e63b80efaf6119d_800.jpg" 
+                    alt="Кот и человек смеются вместе" 
+                    class="joke-image">
+                <p class="joke-text">
+                    Настоящий друг — это кот. Он никогда не скажет:<br>
+                    — Почему ты жрешь по ночам?!<br>
+                    Он будет жрать вместе с тобой.
+                </p>
+            </article>
+
+            <article class="joke-container">
+                <h3>Три языка</h3>
+                <img 
+                    src="https://avatars.mds.yandex.net/i?id=9b3ba50eb41f8990f8f73d40f9eb603372810c17-4542725-images-thumbs&n=13" 
+                    alt="Смешная картинка" 
+                    class="joke-image">
+                <p class="joke-text">
+                    Мужик приходит на фирму устраиваться на работу. У него спрашивают:<br>
+                    – Сколько знаете языков?<br>
+                    – Три.<br>
+                    – А какие?<br>
+                    – Русский, английский, французский.<br>
+                    – Ну скажите что-нибудь на английском.<br>
+                    – Guttеn tаg.<br>
+                    – Это же немецкий!<br>
+                    – Ну, значит четыре…
+                </p>
+            </article>
+
+            <article class="joke-container">
+                <h3>Весёлая картинка</h3>
+                <img 
+                    src="https://sun9-64.userapi.com/impg/pdUGwLmWcIT_z6Bng0UY8j9pZumUSv4PL-XiaQ/CuS1MuBddYE.jpg?size=748x600&quality=96&sign=1628b3eae582c9d0f2db7c27d4c6ed46&type=album" 
+                    alt="Весёлая картинка" 
+                    class="joke-image">
+            </article>
+        </section>
+
+        <section aria-labelledby="movie-heading">
+            <h2 id="movie-heading">Фильм "Третий акт"</h2>
+            
+            <article class="movie-section">
+                <h3>О фильме</h3>
+                <img 
+                    src="https://avatars.mds.yandex.net/i?id=8d959dab56356983455b4317bfacf8c6_l-5426221-images-thumbs&n=13" 
+                    alt="Постер фильма Третий акт" 
+                    class="movie-image">
+                <p class="movie-description">
+                    Известный писатель Монте Уайлдхорн, прикованный к инвалидному креслу и изнуренный борьбой с пристрастием к алкоголю, возвращается в небольшой городок, где некогда обрёл славу. После смерти жены Уайлдхорн утратил интерес к жизни и не мог больше писать.<br><br>
+                    В своём родном городке писатель снимает небольшой дом в живописном месте и со временем знакомится с семьёй, живущей по соседству — миссис О'Нил и её тремя детьми. Уайлдхорн пытается раскрыть талант у одной из маленьких дочерей соседки — ведь девочка ещё не научилась отпускать своё воображение на волю.<br><br>
+                    Благодаря дружбе с соседями Монте Уайлдхорн снова начинает испытывать радость от жизни и творчества.
+                </p>
+            </article>
+        </section>
+
+        <section aria-labelledby="review-heading">
+            <h2 id="review-heading">Отзыв</h2>
+            <article class="review-section">
+                <h3>Моё мнение</h3>
+                <p>«Третий акт» — это доброе, жизнеутверждающее и очень мудрое кино, которое я рекомендую всем, кто устал от бесконечного экшена и спецэффектов. Это фильм-настроение, которое хочется растянуть. Он о том, что даже в глубоком кризисе можно найти опору в простых вещах — в дружбе, творчестве и вере в чудо. Он учит не бояться закрытых дверей и замечать новые возможности.</p>
+            </article>
+        </section>
+
+        <section aria-labelledby="quotes-heading">
+            <h2 id="quotes-heading">Цитаты</h2>
+            <ul class="quotes-list">
+                <li>Если одна дверь закрылась, другая обязательно откроется... Просто не нужно стоять у закрытой двери и ждать, что она вновь откроется, так Вы не упустите новую возможность.</li>
+                <li>Никогда не поздно начать все сначала.</li>
+                <li>Каждый день – новая возможность начать все с чистого листа.</li>
+                <li>Я всегда чувствовала, что книга — это друг, который делает то, что не может сделать ни один друг: молчит, когда тебе нужно подумать.</li>
+            </ul>
+        </section>
+
+        <section aria-labelledby="schedule-heading">
+            <h2 id="schedule-heading">Расписание матчей</h2>
+            <table>
+                <colgroup span="2"></colgroup> 
+                <colgroup span="3" style="width: 150px;"></colgroup> 
+                <thead>
+                    <tr>
+                        <th scope="col">Дата</th>
+                        <th scope="col">Время</th>
+                        <th scope="col">Турнир</th>
+                        <th scope="col">Соперник</th>
+                        <th scope="col">Счёт / превью</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>22.01.2026</td>
+                        <td>16:00</td>
+                        <td>Товарищеские матчи (клубы)</td>
+                        <td>Акрон</td>
+                        <td><span class="score">1:3</span></td>
+                    </tr>
+                    <tr>
+                        <td>22.01.2026</td>
+                        <td>16:00</td>
+                        <td>Товарищеские матчи (клубы)</td>
+                        <td>Динамо Самарканд</td>
+                        <td><span class="preview">превью</span></td>
+                    </tr>
+                    <tr>
+                        <td>25.01.2026</td>
+                        <td>16:00</td>
+                        <td>Товарищеские матчи (клубы)</td>
+                        <td>Динамо Самарканд</td>
+                        <td><span class="score">3:4</span></td>
+                    </tr>
+                    <tr>
+                        <td>03.02.2026</td>
+                        <td>19:15</td>
+                        <td>WINLINE Зимний кубок РПЛ</td>
+                        <td>Краснодар</td>
+                        <td><span class="score">2:2</span></td>
+                    </tr>
+                    <tr>
+                        <td>06.02.2026</td>
+                        <td>15:00</td>
+                        <td>WINLINE Зимний кубок РПЛ</td>
+                        <td>Динамо</td>
+                        <td><span class="score">1:1</span></td>
+                    </tr>
+                    <tr>
+                        <td>10.02.2026</td>
+                        <td>10:00</td>
+                        <td>WINLINE Зимний кубок РПЛ</td>
+                        <td>Зенит</td>
+                        <td><span class="score">2:2</span></td>
+                    </tr>
+                    <tr>
+                        <td>18.02.2026</td>
+                        <td>16:00</td>
+                        <td>Товарищеские матчи (клубы)</td>
+                        <td>Ростов</td>
+                        <td><span class="score">3:1</span></td>
+                    </tr>
+                    <tr>
+                        <td>21.02.2026</td>
+                        <td>16:30</td>
+                        <td>Товарищеские матчи (клубы)</td>
+                        <td>Локомотив</td>
+                        <td><span class="preview">превью</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy;Лабораторная работа №1</p>
+    </footer>
+</body>
+</html>
