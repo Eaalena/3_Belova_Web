@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hearthstone - Коллекция Карт Pro</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>⚔️ Hearthstone Коллекция Pro</h1>
+        <div class="controls">
+            <button class="btn-filter" onclick="toggleFilters()">🔍 Фильтры</button>
+            <button id="editModeToggle" class="btn-edit" onclick="toggleEditMode()">✏️ Режим редактирования</button>
+            <button id="addCardBtn" class="btn-add" onclick="toggleAddForm()">➕ Добавить карту</button>
+            <button class="btn-export" onclick="exportDeck()">📥 Экспорт</button>
+        </div>
+    </header>
+
+    <div id="filterPanel" class="filter-panel">
+        <div class="filter-group">
+            <div>
+                <label>🔍 Поиск:</label>
+                <input type="text" id="filterSearch" placeholder="Название карты..." oninput="applyFilters()">
+            </div>
+            <div>
+                <label>📊 Тип карты:</label>
+                <select id="filterType" onchange="applyFilters()">
+                    <option value="">Все типы</option>
+                    <option value="minion">Миньоны</option>
+                    <option value="spell">Заклинания</option>
+                    <option value="weapon">Оружие</option>
+                </select>
+            </div>
+            <div>
+                <label>🎓 Класс:</label>
+                <select id="filterClass" onchange="applyFilters()">
+                    <option value="">Все классы</option>
+                    <option value="neutral">Neutral</option>
+                    <option value="mage">Mage</option>
+                    <option value="warrior">Warrior</option>
+                    <option value="priest">Priest</option>
+                    <option value="hunter">Hunter</option>
+                    <option value="warlock">Warlock</option>
+                </select>
+            </div>
+            <div>
+                <label>💎 Редкость:</label>
+                <select id="filterRarity" onchange="applyFilters()">
+                    <option value="">Все редкости</option>
+                    <option value="common">Common</option>
+                    <option value="rare">Rare</option>
+                    <option value="epic">Epic</option>
+                    <option value="legendary">Legendary</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-bar">
+        <div class="stat-item">
+            <div class="stat-value" id="totalCards">0</div>
+            <div class="stat-label">Всего карт</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="totalMinions">0</div>
+            <div class="stat-label">Миньонов</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="totalSpells">0</div>
+            <div class="stat-label">Заклинаний</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="totalWeapons">0</div>
+            <div class="stat-label">Оружий</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="avgMana">0</div>
+            <div class="stat-label">Средняя мана</div>
+        </div>
+    </div>
+
+    <div id="addCardForm" class="add-card-form">
+        <h2>✨ Создание новой карты</h2>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Тип карты:</label>
+                <select id="newCardType" onchange="updateFormFields()">
+                    <option value="minion">Миньон</option>
+                    <option value="spell">Заклинание</option>
+                    <option value="weapon">Оружие</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Название: *</label>
+                <input type="text" id="newCardName" placeholder="Введите название">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Стоимость маны: *</label>
+                <input type="number" id="newCardCost" min="0" max="20" placeholder="0-20">
+            </div>
+            <div class="form-group">
+                <label>Редкость:</label>
+                <select id="newCardRarity">
+                    <option value="common">Common</option>
+                    <option value="rare">Rare</option>
+                    <option value="epic">Epic</option>
+                    <option value="legendary">Legendary</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Класс:</label>
+                <select id="newCardClass">
+                    <option value="neutral">Neutral</option>
+                    <option value="mage">Mage</option>
+                    <option value="warrior">Warrior</option>
+                    <option value="priest">Priest</option>
+                    <option value="hunter">Hunter</option>
+                    <option value="warlock">Warlock</option>
+                </select>
+            </div>
+            <div class="form-group" id="attackGroup">
+                <label>Атака:</label>
+                <input type="number" id="newCardAttack" min="0" max="20" placeholder="0-20">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group" id="healthGroup">
+                <label>Здоровье:</label>
+                <input type="number" id="newCardHealth" min="1" max="30" placeholder="1-30">
+            </div>
+            <div class="form-group" id="durabilityGroup" style="display:none;">
+                <label>Прочность:</label>
+                <input type="number" id="newCardDurability" min="1" max="10" placeholder="1-10">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Описание способности:</label>
+            <textarea id="newCardDescription" rows="3" placeholder="Опишите эффект карты..."></textarea>
+        </div>
+        <div class="form-actions">
+            <button class="btn-save" onclick="createNewCard()">✨ Создать карту</button>
+            <button class="btn-cancel" onclick="toggleAddForm()">❌ Отмена</button>
+        </div>
+    </div>
+
+    <div id="cardsContainer" class="cards-container"></div>
+
+    <div id="toast" class="toast"></div>
+
+    <div id="modalOverlay" class="modal-overlay">
+        <div class="modal">
+            <h3 id="modalTitle">Подтверждение</h3>
+            <p id="modalText">Вы уверены?</p>
+            <div class="modal-buttons">
+                <button class="btn-save" id="modalConfirm">Подтвердить</button>
+                <button class="btn-cancel" onclick="closeModal()">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
