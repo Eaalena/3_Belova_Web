@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лабораторная работа №6 - Работа с API</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="#users">👥 Пользователи</a></li>
+                <li><a href="#products">🛍️ Товары</a></li>
+                <li><a href="#posts">📝 Посты о РХТУ</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container">
+        <h1>🚀 Лабораторная работа №6<br>Работа с API</h1>
+
+        <!-- API 1: DummyJSON - Users -->
+        <section id="users" class="section">
+            <h2>👥 DummyJSON Users API</h2>
+            <div class="api-description">
+                <strong>API:</strong> https://dummyjson.com/users<br>
+                <strong>Методы:</strong> GET, POST<br>
+                <strong>Описание:</strong> API для работы с пользователями (из apipheny.io)
+            </div>
+            
+            <button class="btn btn-get" onclick="getUsers()">📥 Получить пользователей</button>
+            <button class="btn btn-post" onclick="createUser()">➕ Создать пользователя</button>
+            
+            <div id="usersResult"></div>
+        </section>
+
+        <!-- API 2: FakeStoreAPI - Products -->
+        <section id="products" class="section">
+            <h2>🛍️ FakeStoreAPI Products</h2>
+            <div class="api-description">
+                <strong>API:</strong> https://fakestoreapi.com<br>
+                <strong>Методы:</strong> GET, POST, PUT<br>
+                <strong>Описание:</strong> E-commerce API для работы с товарами (из publicapis.dev)
+            </div>
+
+            <div class="api-subsection">
+                <h3 class="subsection-title get">GET - Получить товары</h3>
+                <button class="btn btn-get" onclick="getProducts()">Получить все товары</button>
+                <div id="getProductsResult"></div>
+            </div>
+
+            <div class="api-subsection">
+                <h3 class="subsection-title post">POST - Добавить товар</h3>
+                <div class="form-group">
+                    <label>Название:</label>
+                    <input type="text" id="productTitle" value="Смартфон">
+                </div>
+                <div class="form-group">
+                    <label>Цена:</label>
+                    <input type="number" id="productPrice" value="29999">
+                </div>
+                <button class="btn btn-post" onclick="createProduct()">Добавить товар</button>
+                <div id="createProductResult"></div>
+            </div>
+
+            <div class="api-subsection">
+                <h3 class="subsection-title put">PUT - Обновить товар</h3>
+                <div class="form-group">
+                    <label>ID товара:</label>
+                    <input type="number" id="updateProductId" value="1" min="1" max="20">
+                </div>
+                <button class="btn btn-put" onclick="updateProduct()">Обновить товар</button>
+                <div id="updateProductResult"></div>
+            </div>
+        </section>
+
+        <!-- API 3: DummyJSON - Posts (РУССКИЕ ПОСТЫ ПРО РХТУ) -->
+        <section id="posts" class="section">
+            <h2>📝 Посты о РХТУ им. Д.И. Менделеева</h2>
+            <div class="api-description">
+                <strong>API:</strong> https://dummyjson.com/posts<br>
+                <strong>Методы:</strong> GET, DELETE<br>
+                <strong>Описание:</strong> Посты о Российском химико-технологическом университете
+            </div>
+
+            <div class="api-subsection">
+                <h3 class="subsection-title get">GET - Получить посты о РХТУ</h3>
+                <button class="btn btn-get" onclick="getPosts()">Получить посты</button>
+                <div id="getPostsResult"></div>
+            </div>
+
+            <div class="api-subsection">
+                <h3 class="subsection-title delete">DELETE - Удалить пост</h3>
+                <div class="form-group">
+                    <label>ID поста:</label>
+                    <input type="number" id="deletePostId" value="1" min="1" max="100">
+                </div>
+                <button class="btn btn-delete" onclick="deletePost()">Удалить пост</button>
+                <div id="deletePostResult"></div>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <p>Лабораторная работа №6 | Работа с API | 2026</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
