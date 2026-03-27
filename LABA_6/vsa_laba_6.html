@@ -263,7 +263,6 @@
     <div class="container">
         <h1>🚀 Лабораторная работа №6<br>Работа с API</h1>
 
-        <!-- API 1: DummyJSON - Users -->
         <section id="users" class="section">
             <h2>👥 DummyJSON Users API</h2>
             <div class="api-description">
@@ -278,7 +277,6 @@
             <div id="usersResult"></div>
         </section>
 
-        <!-- API 2: FakeStoreAPI - Products -->
         <section id="products" class="section">
             <h2>🛍️ FakeStoreAPI Products</h2>
             <div class="api-description">
@@ -318,7 +316,6 @@
             </div>
         </section>
 
-        <!-- API 3: DummyJSON - Posts (РУССКИЕ ПОСТЫ ПРО РХТУ) -->
         <section id="posts" class="section">
             <h2>📝 Посты о РХТУ им. Д.И. Менделеева</h2>
             <div class="api-description">
@@ -350,7 +347,7 @@
     </footer>
 
     <script>
-        // Словарь для перевода категорий товаров
+
         const categoryTranslations = {
             "electronics": "Электроника",
             "jewelery": "Ювелирные изделия",
@@ -358,7 +355,6 @@
             "women's clothing": "Женская одежда"
         };
 
-        // Русские названия товаров
         const productNames = {
             "Fjallraven - Foldsack No. 1 Backpack, Fits 15 Laptops": "Рюкзак Fjallraven для ноутбука 15\"",
             "Mens Casual Premium Slim Fit T-Shirts": "Мужская футболка премиум класса",
@@ -382,15 +378,12 @@
             "DANVOUY Womens T Shirt Casual Cotton Short Sleeve": "Женская хлопковая футболка с коротким рукавом"
         };
 
-        // Функция для генерации URL аватара
         function getUserAvatar(firstName, lastName, index) {
-            // Используем pravatar.cc для генерации случайных фото
-            // Добавляем index чтобы у каждого пользователя было разное фото
+
             const seed = `${firstName}${lastName}${index}`;
             return `https://i.pravatar.cc/300?u=${seed}`;
         }
 
-        // ==================== API 1: DUMMYJSON - USERS ====================
         async function getUsers() {
             const resultDiv = document.getElementById('usersResult');
             resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Загрузка пользователей...</div>';
@@ -403,7 +396,7 @@
                 
                 let html = '<div class="cards-grid">';
                 data.users.forEach((user, index) => {
-                    // Генерируем фото через pravatar.cc с seed на основе имени
+    
                     const userPhoto = getUserAvatar(user.firstName, user.lastName, user.id || index);
                     
                     html += `
@@ -462,7 +455,6 @@
             }
         }
 
-        // ==================== API 2: FAKESTOREAPI - PRODUCTS ====================
         async function getProducts() {
             const resultDiv = document.getElementById('getProductsResult');
             resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Загрузка товаров...</div>';
@@ -475,9 +467,9 @@
                 
                 let html = '<div class="cards-grid">';
                 products.forEach(product => {
-                    // Переводим название или используем оригинал если перевода нет
+
                     const ruName = productNames[product.title] || product.title;
-                    // Переводим категорию
+
                     const ruCategory = categoryTranslations[product.category] || product.category;
                     
                     html += `
@@ -566,12 +558,10 @@
             }
         }
 
-        // ==================== API 3: ПОСТЫ ПРО РХТУ (кастомные данные) ====================
         async function getPosts() {
             const resultDiv = document.getElementById('getPostsResult');
             resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Загрузка постов...</div>';
-            
-            // Русские посты про РХТУ им. Менделеева
+
             const russianPosts = [
                 {
                     id: 1,
@@ -650,7 +640,6 @@
             }
         }
 
-        // Плавная прокрутка
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
