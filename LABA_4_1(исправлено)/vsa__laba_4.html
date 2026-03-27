@@ -1,14 +1,13 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <!-- ===== META ===== -->
+ 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>!!! УМНЫЙ НОСОК-ШПИОН !!!</title>
-    
-    <!-- ===== CSS СТИЛИ ===== -->
+
     <style>
-        /* ===== RESET.CSS ===== */
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { line-height: 1.15; }
         body { min-height: 100vh; }
@@ -18,7 +17,6 @@
         ul, ol { list-style: none; }
         table { border-collapse: collapse; border-spacing: 0; }
 
-        /* ===== ПЕРЕМЕННЫЕ ===== */
         :root {
             --neon-green: #39ff14;
             --electric-blue: #00ffff;
@@ -27,7 +25,6 @@
             --warning-yellow: #ffff00;
         }
 
-        /* ===== BODY ===== */
         body {
             margin: 0;
             padding: 0;
@@ -46,7 +43,6 @@
             100% { background-position: 0% 50%; }
         }
 
-        /* ===== HEADER ===== */
         header {
             background: var(--danger-red);
             color: white;
@@ -79,7 +75,6 @@
             transform: rotate(-3deg);
         }
 
-        /* ===== CONTAINER ===== */
         .container {
             display: grid;
             grid-template-columns: 180px 1fr 180px;
@@ -90,7 +85,6 @@
             padding: 10px;
         }
 
-        /* ===== ASIDE (боковые панели) ===== */
         aside {
             background: var(--electric-blue);
             border: 4px ridge white;
@@ -120,7 +114,6 @@
             border: 2px solid black;
         }
 
-        /* ===== MAIN ===== */
         main {
             background: white;
             border: 6px double var(--hot-pink);
@@ -128,7 +121,6 @@
             box-shadow: 10px 10px 0px rgba(0,0,0,0.3);
         }
 
-        /* ===== HERO SECTION ===== */
         .hero {
             text-align: center;
             border: 3px dotted var(--neon-green);
@@ -174,12 +166,10 @@
             transform: rotate(2deg);
         }
 
-        /* ===== SECTIONS ===== */
         section {
             margin-bottom: 20px;
         }
 
-        /* ===== REASONS SECTION ===== */
         .reasons-section {
             background: var(--warning-yellow);
             border: 4px solid black;
@@ -235,7 +225,6 @@
             line-height: 1.3;
         }
 
-        /* ===== FEATURES SECTION ===== */
         .features-section h3 {
             background: var(--hot-pink);
             color: white;
@@ -265,7 +254,6 @@
             margin-bottom: 5px;
         }
 
-        /* ===== SPECIAL MODES ===== */
         .special-modes {
             background: linear-gradient(45deg, #000080, #800080);
             color: white;
@@ -296,7 +284,6 @@
             border: 2px solid white;
         }
 
-        /* ===== REVIEWS SECTION ===== */
         .reviews-section h3 {
             background: black;
             color: var(--warning-yellow);
@@ -322,7 +309,6 @@
         .review-stars { color: gold; font-size: 1rem; }
         .review-author { font-weight: bold; color: var(--hot-pink); margin: 5px 0; }
 
-        /* ===== CTA SECTION ===== */
         .cta-section { text-align: center; }
 
         .buy-btn {
@@ -353,7 +339,6 @@
             font-style: italic;
         }
 
-        /* ===== FLOATING BADGE ===== */
         .floating-badge {
             position: fixed;
             top: 100px;
@@ -380,7 +365,6 @@
             50% { transform: translateY(-10px) rotate(5deg); }
         }
 
-        /* ===== MARQUEE ===== */
         .marquee-container {
             background: var(--danger-red);
             color: white;
@@ -402,7 +386,6 @@
             100% { transform: translateX(-100%); }
         }
 
-        /* ===== DARK THEME ===== */
         body.dark-theme {
             background: linear-gradient(135deg, #1a1a2e, #16213e);
             color: #eaeaea;
@@ -428,7 +411,6 @@
             color: #eaeaea;
         }
 
-        /* ===== THEME TOGGLE ===== */
         .theme-toggle {
             position: fixed;
             top: 20px;
@@ -453,7 +435,6 @@
             box-shadow: 0 6px 20px rgba(0,0,0,0.4);
         }
 
-        /* ===== REVIEWS SECTION NEW ===== */
         .reviews-section-new {
             background: white;
             border: 4px solid var(--hot-pink);
@@ -533,7 +514,6 @@
             font-style: italic;
         }
 
-        /* ===== ADD REVIEW FORM ===== */
         .add-review-form {
             background: linear-gradient(135deg, #f5f5f5, #fff);
             border: 3px dashed var(--neon-green);
@@ -593,7 +573,6 @@
             box-shadow: 0 5px 15px rgba(57, 255, 20, 0.4);
         }
 
-        /* ===== MEDIA QUERIES ===== */
         @media (max-width: 768px) {
             .container { grid-template-columns: 1fr; grid-template-areas: "main" "left" "right"; }
             .features-grid { grid-template-columns: repeat(2, 1fr); }
@@ -624,34 +603,29 @@
     </style>
 </head>
 
-<!-- ===== BODY START ===== -->
 <body>
-    <!-- THEME TOGGLE BUTTON -->
+
     <button id="themeToggle" class="theme-toggle" aria-label="Переключить тему">
         <span class="theme-icon">🌙</span>
     </button>
 
-    <!-- HEADER -->
     <header role="banner">
         <h1>🧦 УМНЫЙ НОСОК-ШПИОН 🧦</h1>
         <div class="subtitle">С ФУНКЦИЕЙ САМОЗАЩИТЫ!!!</div>
     </header>
 
-    <!-- MARQUEE (бегущая строка) -->
     <div class="marquee-container" role="marquee" aria-label="Акции и предложения">
         <div class="marquee">
             🔥 СКИДКА 99% ТОЛЬКО СЕГОДНЯ! 🔥 КУПИ 2 ПОЛУЧИ 5! 🔥 ТВОИ НОГИ БУДУТ В БЕЗОПАСНОСТИ! 🔥 НЕ УПУСТИ ШАНС! 🔥
         </div>
     </div>
 
-    <!-- FLOATING BADGE -->
     <div class="floating-badge" aria-label="Скидка 99 процентов сегодня">
         -99%<br>СЕГОДНЯ!
     </div>
 
-    <!-- CONTAINER -->
     <div class="container">
-        <!-- LEFT SIDEBAR -->
+
         <aside class="left-sidebar" aria-label="Рекламные объявления слева">
             <div class="sidebar-ad" role="complementary">
                 <span class="sidebar-ad-title">🎁 БЕСПЛАТНЫЙ IPHONE!</span>
@@ -670,9 +644,8 @@
             </div>
         </aside>
 
-        <!-- MAIN CONTENT -->
         <main role="main">
-            <!-- HERO SECTION -->
+
             <section class="hero" aria-label="Главный баннер">
                 <figure>
                     <img src="noski.jpg" alt="Умный носок-шпион с LED подсветкой и датчиками" class="hero-img" onerror="this.src='https://via.placeholder.com/350x250?text=НОСОК-ШПИОН'">
@@ -686,7 +659,6 @@
                 </p>
             </section>
 
-            <!-- REASONS SECTION -->
             <section class="reasons-section" aria-label="Причины купить">
                 <h3>🔥 ТОП-5 ПРИЧИН КУПИТЬ ПРЯМО СЕЙЧАС 🔥</h3>
                 <div class="reasons-flex">
@@ -713,7 +685,6 @@
                 </div>
             </section>
 
-            <!-- FEATURES SECTION -->
             <section class="features-section" aria-label="Основные функции">
                 <h3>⚡ ОСНОВНЫЕ ФУНКЦИИ ⚡</h3>
                 <div class="features-grid">
@@ -760,7 +731,6 @@
                 </div>
             </section>
 
-            <!-- SPECIAL MODES -->
             <section class="special-modes" aria-label="Специальные режимы">
                 <h3>🎮 СПЕЦИАЛЬНЫЕ РЕЖИМЫ 🎮</h3>
                 <div class="modes-flex">
@@ -774,7 +744,6 @@
                 </div>
             </section>
 
-            <!-- REVIEWS SECTION -->
             <section class="reviews-section" aria-label="Отзывы покупателей">
                 <h3>💬 ЧТО ГОВОРЯТ ПОКУПАТЕЛИ 💬</h3>
                 <div class="reviews-grid">
@@ -796,7 +765,6 @@
                 </div>
             </section>
 
-            <!-- CTA SECTION -->
             <section class="cta-section" aria-label="Призыв к действию">
                 <button type="button" class="buy-btn" aria-label="Купить за 999 рублей">🛒 КУПИТЬ ЗА 999₽!!! 🛒</button>
                 <p class="guarantee">
@@ -805,7 +773,6 @@
                 </p>
             </section>
 
-            <!-- REVIEWS SECTION NEW (с формой) -->
             <section class="reviews-section-new" id="reviewsSection" aria-label="Добавить отзыв">
                 <h3>💬 ДОБАВИТЬ ОТЗЫВ 💬</h3>
                 <div class="reviews-container" id="reviewsContainer" aria-live="polite"></div>
@@ -843,7 +810,6 @@
             </section>
         </main>
 
-        <!-- RIGHT SIDEBAR -->
         <aside class="right-sidebar" aria-label="Рекламные объявления справа">
             <div class="sidebar-ad" role="complementary">
                 <span class="sidebar-ad-title">🍖 ШАШЛЫНДОС</span>
@@ -863,9 +829,8 @@
         </aside>
     </div>
 
-    <!-- ===== JAVASCRIPT ===== -->
     <script>
-        // ===== COOKIE.JS =====
+
         const CookieUtils = {
             set: function(name, value, options) {
                 options = options || {};
@@ -915,7 +880,6 @@
             }
         };
 
-        // ===== REVIEWS MANAGER =====
         const ReviewsManager = {
             defaultReviews: [
                 { id: 1, name: "Игорь П.", image: "", text: "Носки взломали мой телефон и заказали пиццу! Но было вкусно, так что 5 звёзд!", rating: 5, date: "2026-03-01" },
@@ -951,7 +915,6 @@
             getReviews: function() { return this.init(); }
         };
 
-        // ===== FORM VALIDATOR =====
         const FormValidator = {
             validate: function(formData) {
                 const errors = {};
@@ -983,7 +946,6 @@
             }
         };
 
-        // ===== REVIEWS UI =====
         const ReviewsUI = {
             render: function() {
                 const reviews = ReviewsManager.getReviews();
@@ -1023,7 +985,6 @@
             }
         };
 
-        // ===== THEME TOGGLE =====
         const ThemeToggle = {
             init: function() {
                 const toggle = document.getElementById('themeToggle');
@@ -1048,7 +1009,6 @@
             }
         };
 
-        // ===== INIT =====
         document.addEventListener('DOMContentLoaded', function() {
             ThemeToggle.init();
             ReviewsUI.render();
