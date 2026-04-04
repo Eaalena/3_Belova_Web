@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лабораторная работа №7 - React PRO</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    animation: {
+                        'bounce-slow': 'bounce 2s infinite',
+                        'fade-in': 'fadeIn 0.5s ease-in',
+                        'slide-in': 'slideIn 0.3s ease-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideIn: {
+                            '0%': { transform: 'translateX(100%)' },
+                            '100%': { transform: 'translateX(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; transition: all 0.3s; }
+        .hidden { display: none !important; }
+        .active-nav { background: #4f46e5; color: white; transform: scale(1.05); }
+        .card-hover { transition: all 0.3s; }
+        .card-hover:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        .dark .card-hover:hover { box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        .captcha-item.selected { border-color: #10b981; box-shadow: 0 0 0 4px #10b981; }
+        .toast { animation: slideIn 0.3s ease-out; }
+        .skeleton { background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; }
+        @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .dark .skeleton { background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%); background-size: 200% 100%; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-600 to-purple-700 dark:from-gray-900 dark:to-gray-800 min-h-screen">
+    <div id="root"></div>
+
+    <script>
+        const { useState, useEffect, useReducer, useContext, createContext } = React;
+
+        // CONTEXT
+        const AppContext = createContext();
+        const initialState = { 
+            users: [], products: [], posts: [], 
+            loading: false, error: null,
+            cart: JSON.parse(localStorage.getItem('cart')) || [],
+            darkMode: localStorage.getItem('darkMode') === 'true',
+            captchaPassed: false,
+        };
+
+        const appReducer = (state, action) => {
+            switch (action.type) {
+                case 'SET_LOADING': return { ...state, loading: action.payload };
+                case 'SET_USERS': return { ...state, users: action.payload };
+                case 'SET_PRODUCTS': return { ...state, products: action.payload };
+                case 'SET_POSTS': return { ...state, posts: action.payload };
+                case 'ADD_USER': return { ...state, users: [...state.users, action.payload] };
+                case 'ADD_PRODUCT': return { ...state, products: [...state.products, action.payload] };
+                case 'ADD_POST': return { ...state, posts: [action.payload, ...state.posts] };
+                case 'ADD_TO_CART': 
+                    const newCart = [...state.cart, action.payload];
+                    localStorage.setItem('cart', JSON.stringify(newCart));
+                    return { ...state, cart: newCart };
+                case 'REMOVE_FROM_CART':
+                    const updatedCart = state.cart.filter(item => item.id !== action.payload);
+                    localStorage.setItem('cart', JSON.stringify(updatedCart));
+                    return { ...state, cart: updatedCart };
+                case 'CLEAR_CART':
+                    localStorage.removeItem('cart');
+                    return { ...state, cart: [] };
+                case 'TOGGLE_DARK_MODE':
+                    localStorage.setItem('darkMode', !state.darkMode);
+                    return { ...state, darkMode: !state.darkMode };
+                case 'SET_CAPTCHA_PASSED': return { ...state, captchaPassed: action.payload };
+                default: return state;
+            }
+        };
+
+        const AppProvider = ({ children }) => {
+            const [state, dispatch] = useReducer(appReducer, initialState);
+            useEffect(() => {
+                if (state.darkMode) document.documentElement.classList.add('dark');
+                else document.documentElement.classList.remove('dark');
+            }, [state.darkMode]);
+            return React.createElement(AppContext.Provider, { value: { state, dispatch } }, children);
+        };
+
+        const useAppContext = () => {
+            const context = useContext(AppContext);
+            if (!context) throw new Error('useAppContext must be used within AppProvider');
+            return context;
+        };
+
+        // API
+        const api = {
+            users: {
+                getAll: (limit = 10) => fetch(`https://dummyjson.com/users?limit=${limit}`).then(r => r.json()),
+                add: (data) => fetch('https://dummyjson.com/users/add', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+                }).then(r => r.json()),
+            },
+            products: {
+                getAll: (limit = 8) => fetch(`https://fakestoreapi.com/products?limit=${limit}`).then(r => r.json()),
+                getByCategory: (cat) => fetch(`https://fakestoreapi.com/products/category/${cat}`).then(r => r.json()),
+            },
+            posts: {
+                getAll: (limit = 5) => fetch(`https://dummyjson.com/posts?limit=${limit}`).then(r => r.json()),
+                add: (data) => fetch('https://dummyjson.com/posts/add', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+                }).then(r => r.json()),
+            },
+        };
+
+        // COMPONENTS
+        const Button = ({ children, onClick, variant = 'primary', className = '', disabled = false, type = 'button' }) => {
+            const colors = {
+                primary: 'bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600',
+                success: 'bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600',
+                warning: 'bg-yellow-500 hover:bg-yellow-600 text-black',
+                danger: 'bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600',
+                info: 'bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600',
+            };
+            return React.createElement('button', {
+                type, onClick, disabled,
+                className: `px-6 py-3 rounded-xl font-semibold text-white transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 ${colors[variant]} ${className}`,
+            }, children);
+        };
+
+        const Toast = ({ message, type, onClose }) => {
+            useEffect(() => {
+                const timer = setTimeout(onClose, 3000);
+                return () => clearTimeout(timer);
+            }, [onClose]);
+            
+            const colors = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                warning: 'bg-yellow-500',
+                info: 'bg-blue-500',
+            };
+            
+            return React.createElement('div', {
+                className: `toast fixed top-4 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-xl z-50 flex items-center gap-2`,
+            },
+                React.createElement('i', { className: `fas fa-${type === 'success' ? 'check' : type === 'error' ? 'times' : 'info'}-circle` }),
+                React.createElement('span', null, message)
+            );
+        };
+
+        const Header = () => {
+            const { state, dispatch } = useAppContext();
+            return React.createElement('header', { className: 'bg-white/95 dark:bg-gray-800/95 backdrop-blur sticky top-0 z-50 shadow-md' },
+                React.createElement('div', { className: 'max-w-6xl mx-auto px-4 py-4 flex justify-between items-center' },
+                    React.createElement('div', { className: 'text-center flex-1' },
+                        React.createElement('h1', { className: 'text-2xl font-bold text-indigo-600 dark:text-indigo-400' },
+                            React.createElement('i', { className: 'fas fa-flask mr-2' }),
+                            'Лабораторная работа №7'
+                        ),
+                        React.createElement('p', { className: 'text-sm text-gray-600 dark:text-gray-400' }, 'React + PRO Features')
+                    ),
+                    React.createElement('div', { className: 'flex gap-4 items-center' },
+                        React.createElement('button', {
+                            onClick: () => dispatch({ type: 'TOGGLE_DARK_MODE' }),
+                            className: 'p-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition',
+                            title: 'Переключить тему (Ctrl+D)',
+                        },
+                            React.createElement('i', { className: `fas fa-${state.darkMode ? 'sun' : 'moon'}` })
+                        ),
+                        React.createElement('div', { className: 'relative' },
+                            React.createElement('button', {
+                                className: 'p-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition',
+                                title: 'Корзина (Ctrl+C)',
+                            },
+                                React.createElement('i', { className: 'fas fa-shopping-cart' }),
+                                state.cart.length > 0 && React.createElement('span', {
+                                    className: 'absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center',
+                                }, state.cart.length)
+                            )
+                        )
+                    )
+                )
+            );
+        };
+
+        const Navigation = ({ currentPage, setPage }) => {
+            const navItems = [
+                { id: 'home', label: 'Главная', icon: 'fa-home', shortcut: 'Ctrl+H' },
+                { id: 'users', label: 'Пользователи', icon: 'fa-users', shortcut: 'Ctrl+U' },
+                { id: 'products', label: 'Товары', icon: 'fa-shopping-bag', shortcut: 'Ctrl+P' },
+                { id: 'posts', label: 'Посты', icon: 'fa-newspaper', shortcut: 'Ctrl+O' },
+            ];
+            
+            return React.createElement('nav', { className: 'bg-white/95 dark:bg-gray-800/95 backdrop-blur shadow-sm' },
+                React.createElement('ul', { className: 'flex justify-center gap-4 p-4 flex-wrap list-none' },
+                    navItems.map(item => React.createElement('li', { key: item.id },
+                        React.createElement('button', {
+                            onClick: () => setPage(item.id),
+                            className: `flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition-all ${
+                                currentPage === item.id ? 'active-nav' : 'text-gray-800 dark:text-gray-200 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-500'
+                            }`,
+                            title: item.shortcut,
+                        },
+                            React.createElement('i', { className: `fas ${item.icon}` }),
+                            item.label
+                        )
+                    ))
+                )
+            );
+        };
+
+        // CAPTCHA COMPONENT - ИСПРАВЛЕННЫЙ
+        const Captcha = ({ onSuccess, onClose }) => {
+            const [selected, setSelected] = useState([]);
+            const [images] = useState(() => {
+                const items = [
+                    { id: 1, hasTrafficLight: true, label: 'Светофор', url: 'https://images.unsplash.com/photo-1565103058368-89b971781f5f?w=200&h=200&fit=crop' },
+                    { id: 2, hasTrafficLight: false, label: 'Дорога', url: 'https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=200&h=200&fit=crop' },
+                    { id: 3, hasTrafficLight: true, label: 'Светофор', url: 'https://images.unsplash.com/photo-1574593087834-84e0a6a0d85d?w=200&h=200&fit=crop' },
+                    { id: 4, hasTrafficLight: false, label: 'Улица', url: 'https://images.unsplash.com/photo-1519810755548-39de21724b90?w=200&h=200&fit=crop' },
+                    { id: 5, hasTrafficLight: true, label: 'Светофор', url: 'https://images.unsplash.com/photo-1485627941532-a9030b00879a?w=200&h=200&fit=crop' },
+                    { id: 6, hasTrafficLight: false, label: 'Шоссе', url: 'https://images.unsplash.com/photo-1517163360542-c2a78e3a639e?w=200&h=200&fit=crop' },
+                    { id: 7, hasTrafficLight: false, label: 'Город', url: 'https://images.unsplash.com/photo-1520699697851-3dc68aa3a474?w=200&h=200&fit=crop' },
+                    { id: 8, hasTrafficLight: true, label: 'Светофор', url: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200&h=200&fit=crop' },
+                    { id: 9, hasTrafficLight: false, label: 'Пейзаж', url: 'https://images.unsplash.com/photo-1469334031218-e382ef7b7b7b?w=200&h=200&fit=crop' },
+                ];
+                return items.sort(() => Math.random() - 0.5);
+            });
+
+            const toggleSelect = (id, hasTrafficLight) => {
+                setSelected(prev => {
+                    if (prev.includes(id)) return prev.filter(i => i !== id);
+                    return [...prev, id];
+                });
+            };
+
+            const verify = () => {
+                const correctIds = images.filter(img => img.hasTrafficLight).map(img => img.id);
+                const isCorrect = selected.length === correctIds.length && selected.every(id => correctIds.includes(id));
+                
+                if (isCorrect) {
+                    onSuccess();
+                } else {
+                    alert('❌ Не все светофоры выбраны! Попробуйте еще раз.');
+                    setSelected([]);
+                }
+            };
+
+            return React.createElement('div', { className: 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4' },
+                React.createElement('div', { className: 'bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-2xl max-w-lg mx-auto w-full relative' },
+                    // КНОПКА ЗАКРЫТИЯ
+                    React.createElement('button', {
+                        onClick: onClose,
+                        className: 'absolute top-4 right-4 w-10 h-10 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-full flex items-center justify-center transition',
+                        title: 'Закрыть',
+                    },
+                        React.createElement('i', { className: 'fas fa-times text-gray-600 dark:text-gray-300' })
+                    ),
+                    React.createElement('div', { className: 'bg-blue-500 text-white p-4 rounded-lg mb-6' },
+                        React.createElement('h3', { className: 'text-xl font-bold mb-2' },
+                            React.createElement('i', { className: 'fas fa-shield-alt mr-2' }),
+                            'Проверка безопасности'
+                        ),
+                        React.createElement('p', null, 'Выберите все изображения со ', React.createElement('strong', null, 'светофорами'))
+                    ),
+                    React.createElement('div', { className: 'grid grid-cols-3 gap-3 mb-6' },
+                        images.map(img => React.createElement('div', {
+                            key: img.id,
+                            onClick: () => toggleSelect(img.id, img.hasTrafficLight),
+                            className: `captcha-item relative aspect-square rounded-lg overflow-hidden cursor-pointer border-4 transition-all ${
+                                selected.includes(img.id) ? 'selected' : 'border-gray-300 dark:border-gray-600'
+                            }`,
+                        },
+                            React.createElement('img', { src: img.url, alt: img.label, className: 'w-full h-full object-cover' }),
+                            selected.includes(img.id) && React.createElement('div', {
+                                className: 'absolute top-2 left-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white',
+                            }, React.createElement('i', { className: 'fas fa-check' }))
+                        ))
+                    ),
+                    React.createElement('div', { className: 'flex gap-4' },
+                        React.createElement(Button, { onClick: verify, variant: 'success', className: 'flex-1' },
+                            React.createElement('i', { className: 'fas fa-check mr-2' }), 'Подтвердить'
+                        ),
+                        React.createElement(Button, { onClick: () => setSelected([]), variant: 'warning', className: 'flex-1' },
+                            React.createElement('i', { className: 'fas fa-undo mr-2' }), 'Сбросить'
+                        )
+                    ),
+                    React.createElement('p', { className: 'text-xs text-gray-500 dark:text-gray-400 mt-4 text-center' },
+                        '💡 Подсказка: выберите все 4 изображения со светофорами'
+                    )
+                )
+            );
+        };
+
+        // PAGES
+        const HomePage = ({ setPage }) => React.createElement('main', { className: 'max-w-6xl mx-auto p-8' },
+            React.createElement('section', { className: 'text-center py-20' },
+                React.createElement('h2', { className: 'text-5xl font-bold text-white mb-6 drop-shadow-lg animate-fade-in' },
+                    React.createElement('i', { className: 'fas fa-code mr-4' }),
+                    'Работа с API'
+                ),
+                React.createElement('p', { className: 'text-xl text-white/90 mb-8' }, 'GET • POST • PUT • DELETE'),
+                React.createElement('div', { className: 'flex gap-4 justify-center flex-wrap' },
+                    React.createElement(Button, { onClick: () => setPage('users'), variant: 'success', className: 'text-lg px-8 py-4' },
+                        React.createElement('i', { className: 'fas fa-users mr-2' }), 'Пользователи'
+                    ),
+                    React.createElement(Button, { onClick: () => setPage('products'), variant: 'warning', className: 'text-lg px-8 py-4' },
+                        React.createElement('i', { className: 'fas fa-shopping-bag mr-2' }), 'Товары'
+                    ),
+                    React.createElement(Button, { onClick: () => setPage('posts'), variant: 'danger', className: 'text-lg px-8 py-4' },
+                        React.createElement('i', { className: 'fas fa-newspaper mr-2' }), 'Посты'
+                    )
+                ),
+                React.createElement('div', { className: 'mt-12 text-white/80 text-sm' },
+                    React.createElement('p', null, 'Горячие клавиши:'),
+                    React.createElement('div', { className: 'flex gap-4 justify-center mt-2' },
+                        React.createElement('span', null, 'Ctrl+U - Пользователи'),
+                        React.createElement('span', null, 'Ctrl+P - Товары'),
+                        React.createElement('span', null, 'Ctrl+O - Посты'),
+                        React.createElement('span', null, 'Ctrl+D - Тема')
+                    )
+                )
+            )
+        );
+
+        const UsersPage = () => {
+            const { state, dispatch } = useAppContext();
+            const [showForm, setShowForm] = useState(false);
+            const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '', age: 25, phone: '', city: '', company: '' });
+            const [toast, setToast] = useState(null);
+
+            useEffect(() => { loadUsers(); }, []);
+
+            const loadUsers = async () => {
+                dispatch({ type: 'SET_LOADING', payload: true });
+                try {
+                    const data = await api.users.getAll(10);
+                    dispatch({ type: 'SET_USERS', payload: data.users });
+                    setToast({ message: `Загружено ${data.users.length} пользователей`, type: 'success' });
+                } catch (error) {
+                    setToast({ message: 'Ошибка загрузки', type: 'error' });
+                } finally {
+                    dispatch({ type: 'SET_LOADING', payload: false });
+                }
+            };
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                try {
+                    const newUser = await api.users.add({
+                        ...formData,
+                        address: { city: formData.city, country: 'Россия' },
+                        company: { name: formData.company, title: 'Специалист' },
+                    });
+                    dispatch({ type: 'ADD_USER', payload: { ...newUser, id: state.users.length + 1 } });
+                    setShowForm(false);
+                    setFormData({ firstName: '', lastName: '', email: '', age: 25, phone: '', city: '', company: '' });
+                    setToast({ message: 'Пользователь создан!', type: 'success' });
+                } catch (error) {
+                    setToast({ message: 'Ошибка: ' + error.message, type: 'error' });
+                }
+            };
+
+            return React.createElement('main', { className: 'max-w-6xl mx-auto p-8' },
+                React.createElement('section', { className: 'bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-xl mb-8' },
+                    React.createElement('header', { className: 'flex items-center justify-between mb-6 pb-4 border-b-4 border-indigo-600' },
+                        React.createElement('h2', { className: 'text-3xl font-bold text-indigo-600 dark:text-indigo-400' },
+                            React.createElement('i', { className: 'fas fa-users mr-3' }), 'Пользователи'
+                        ),
+                        React.createElement('span', { className: 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-bold' },
+                            state.users.length + ' чел.'
+                        )
+                    ),
+                    React.createElement('div', { className: 'flex gap-4 mb-6' },
+                        React.createElement(Button, { onClick: loadUsers, variant: 'success' },
+                            React.createElement('i', { className: 'fas fa-download mr-2' }), 'Загрузить'
+                        ),
+                        React.createElement(Button, { onClick: () => setShowForm(!showForm), variant: 'warning' },
+                            React.createElement('i', { className: 'fas fa-plus mr-2' }), 'Создать'
+                        )
+                    ),
+                    showForm && React.createElement('form', { onSubmit: handleSubmit, className: 'bg-gray-50 dark:bg-gray-700 p-6 rounded-xl mb-6 space-y-4' },
+                        React.createElement('div', { className: 'grid grid-cols-2 gap-4' },
+                            React.createElement('input', { type: 'text', placeholder: 'Имя', value: formData.firstName,
+                                onChange: (e) => setFormData({ ...formData, firstName: e.target.value }),
+                                className: 'w-full p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white', required: true
+                            }),
+                            React.createElement('input', { type: 'text', placeholder: 'Фамилия', value: formData.lastName,
+                                onChange: (e) => setFormData({ ...formData, lastName: e.target.value }),
+                                className: 'w-full p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white', required: true
+                            })
+                        ),
+                        React.createElement('input', { type: 'email', placeholder: 'Email', value: formData.email,
+                            onChange: (e) => setFormData({ ...formData, email: e.target.value }),
+                            className: 'w-full p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white', required: true
+                        }),
+                        React.createElement('div', { className: 'grid grid-cols-2 gap-4' },
+                            React.createElement('input', { type: 'number', placeholder: 'Возраст', value: formData.age,
+                                onChange: (e) => setFormData({ ...formData, age: parseInt(e.target.value) }),
+                                className: 'w-full p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white'
+                            }),
+                            React.createElement('input', { type: 'text', placeholder: 'Телефон', value: formData.phone,
+                                onChange: (e) => setFormData({ ...formData, phone: e.target.value }),
+                                className: 'w-full p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white'
+                            })
+                        ),
+                        React.createElement('input', { type: 'text', placeholder: 'Город', value: formData.city,
+                            onChange: (e) => setFormData({ ...formData, city: e.target.value }),
+                            className: 'w-full p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white'
+                        }),
+                        React.createElement('input', { type: 'text', placeholder: 'Компания', value: formData.company,
+                            onChange: (e) => setFormData({ ...formData, company: e.target.value }),
+                            className: 'w-full p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white'
+                        }),
+                        React.createElement(Button, { type: 'submit', variant: 'primary' },
+                            React.createElement('i', { className: 'fas fa-save mr-2' }), 'Сохранить'
+                        )
+                    ),
+                    state.loading && React.createElement('div', { className: 'text-center py-8' },
+                        React.createElement('div', { className: 'skeleton h-12 w-32 mx-auto rounded' })
+                    ),
+                    React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' },
+                        state.users.map(user => React.createElement('article', { key: user.id, className: 'bg-white dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl p-6 card-hover' },
+                            React.createElement('img', { src: 'https://i.pravatar.cc/300?u=' + user.id, alt: user.firstName, className: 'w-full h-48 object-cover rounded-lg mb-4' }),
+                            React.createElement('h3', { className: 'text-xl font-bold mb-2 dark:text-white' }, user.firstName + ' ' + user.lastName),
+                            React.createElement('p', { className: 'text-gray-600 dark:text-gray-300 mb-1' }, React.createElement('i', { className: 'fas fa-envelope mr-2' }), user.email),
+                            React.createElement('p', { className: 'text-gray-600 dark:text-gray-300 mb-1' }, React.createElement('i', { className: 'fas fa-briefcase mr-2' }), user.company.title),
+                            React.createElement('div', { className: 'flex gap-4 mt-4 pt-4 border-t border-gray-200 dark:border-gray-600 text-sm text-gray-500 dark:text-gray-400' },
+                                React.createElement('span', null, React.createElement('i', { className: 'fas fa-birthday-cake mr-1' }), user.age + ' лет'),
+                                React.createElement('span', null, React.createElement('i', { className: 'fas fa-map-marker-alt mr-1' }), user.address.city)
+                            )
+                        ))
+                    )
+                ),
+                toast && React.createElement(Toast, { ...toast, onClose: () => setToast(null) })
+            );
+        };
+
+        const ProductsPage = () => {
+            const { state, dispatch } = useAppContext();
+            const [searchTerm, setSearchTerm] = useState('');
+            const [showCaptcha, setShowCaptcha] = useState(false);
+            const [toast, setToast] = useState(null);
+
+            useEffect(() => { loadProducts(); }, []);
+
+            const loadProducts = async () => {
+                dispatch({ type: 'SET_LOADING', payload: true });
+                try {
+                    const data = await api.products.getAll(8);
+                    dispatch({ type: 'SET_PRODUCTS', payload: data });
+                    setToast({ message: `Загружено ${data.length} товаров`, type: 'success' });
+                } catch (error) {
+                    setToast({ message: 'Ошибка загрузки', type: 'error' });
+                } finally {
+                    dispatch({ type: 'SET_LOADING', payload: false });
+                }
+            };
+
+            const loadByCategory = (category) => {
+                if (category === 'women\'s clothing' && !state.captchaPassed) {
+                    setShowCaptcha(true);
+                    return;
+                }
+                loadCategoryData(category);
+            };
+
+            const loadCategoryData = async (category) => {
+                dispatch({ type: 'SET_LOADING', payload: true });
+                try {
+                    const data = await api.products.getByCategory(category);
+                    dispatch({ type: 'SET_PRODUCTS', payload: data });
+                    setToast({ message: `Загружено ${data.length} товаров из категории`, type: 'success' });
+                } catch (error) {
+                    setToast({ message: 'Ошибка загрузки категории', type: 'error' });
+                } finally {
+                    dispatch({ type: 'SET_LOADING', payload: false });
+                }
+            };
+
+            const handleCaptchaSuccess = () => {
+                dispatch({ type: 'SET_CAPTCHA_PASSED', payload: true });
+                setShowCaptcha(false);
+                loadCategoryData('women\'s clothing');
+                setToast({ message: '✅ CAPTCHA пройдена! Одежда загружена!', type: 'success' });
+            };
+
+            const addToCart = (product) => {
+                dispatch({ type: 'ADD_TO_CART', payload: product });
+                setToast({ message: `${product.title.substring(0, 30)}... добавлен в корзину`, type: 'success' });
+            };
+
+            const filteredProducts = state.products.filter(p => 
+                p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                p.category.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
+            return React.createElement('main', { className: 'max-w-6xl mx-auto p-8' },
+                showCaptcha && React.createElement(Captcha, { 
+                    onSuccess: handleCaptchaSuccess,
+                    onClose: () => setShowCaptcha(false)
+                }),
+                React.createElement('section', { className: 'bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-xl mb-8' },
+                    React.createElement('header', { className: 'flex items-center justify-between mb-6 pb-4 border-b-4 border-indigo-600' },
+                        React.createElement('h2', { className: 'text-3xl font-bold text-indigo-600 dark:text-indigo-400' },
+                            React.createElement('i', { className: 'fas fa-shopping-bag mr-3' }), 'Товары'
+                        ),
+                        React.createElement('span', { className: 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-bold' },
+                            state.products.length + ' шт.'
+                        )
+                    ),
+                    React.createElement('div', { className: 'flex gap-4 mb-6 flex-wrap' },
+                        React.createElement(Button, { onClick: loadProducts, variant: 'success' },
+                            React.createElement('i', { className: 'fas fa-list mr-2' }), 'Все товары'
+                        ),
+                        React.createElement(Button, { onClick: () => loadByCategory('women\'s clothing'), variant: 'primary' },
+                            React.createElement('i', { className: 'fas fa-tshirt mr-2' }), 'Одежда',
+                            !state.captchaPassed && React.createElement('span', { className: 'ml-2 text-xs bg-yellow-400 text-black px-2 py-1 rounded' }, '🔒')
+                        ),
+                        React.createElement(Button, { onClick: () => loadByCategory('electronics'), variant: 'warning' },
+                            React.createElement('i', { className: 'fas fa-laptop mr-2' }), 'Электроника'
+                        )
+                    ),
+                    React.createElement('div', { className: 'mb-6' },
+                        React.createElement('input', {
+                            type: 'text',
+                            placeholder: '🔍 Поиск товаров...',
+                            value: searchTerm,
+                            onChange: (e) => setSearchTerm(e.target.value),
+                            className: 'w-full p-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl dark:bg-gray-700 dark:text-white text-lg',
+                        })
+                    ),
+                    state.loading && React.createElement('div', { className: 'text-center py-8' },
+                        React.createElement('div', { className: 'skeleton h-12 w-32 mx-auto rounded' })
+                    ),
+                    React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' },
+                        filteredProducts.map(product => React.createElement('article', { key: product.id, className: 'bg-white dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl overflow-hidden card-hover' },
+                            React.createElement('img', { src: product.image, alt: product.title, className: 'w-full h-48 object-contain bg-gray-50 dark:bg-gray-800',
+                                onError: (e) => { e.target.src = 'https://via.placeholder.com/300x180?text=No+Image'; }
+                            }),
+                            React.createElement('div', { className: 'p-6' },
+                                React.createElement('h3', { className: 'text-lg font-bold mb-2 dark:text-white line-clamp-2' }, product.title),
+                                React.createElement('p', { className: 'text-2xl font-bold text-indigo-600 dark:text-indigo-400 mb-2' }, product.price + ' ₽'),
+                                React.createElement('p', { className: 'text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-2' }, product.description.substring(0, 100) + '...'),
+                                React.createElement('div', { className: 'flex gap-4 pt-4 border-t border-gray-200 dark:border-gray-600 text-sm text-gray-500 dark:text-gray-400 mb-4' },
+                                    React.createElement('span', null, React.createElement('i', { className: 'fas fa-star text-yellow-500 mr-1' }), product.rating.rate),
+                                    React.createElement('span', null, React.createElement('i', { className: 'fas fa-tag mr-1' }), product.category)
+                                ),
+                                React.createElement(Button, { onClick: () => addToCart(product), variant: 'success', className: 'w-full' },
+                                    React.createElement('i', { className: 'fas fa-cart-plus mr-2' }), 'В корзину'
+                                )
+                            )
+                        ))
+                    )
+                ),
+                toast && React.createElement(Toast, { ...toast, onClose: () => setToast(null) })
+            );
+        };
+
+        const PostsPage = () => {
+            const { state, dispatch } = useAppContext();
+            const [showForm, setShowForm] = useState(false);
+            const [formData, setFormData] = useState({ title: '', body: '' });
+            const [toast, setToast] = useState(null);
+
+            useEffect(() => { loadPosts(); }, []);
+
+            const loadPosts = async () => {
+                dispatch({ type: 'SET_LOADING', payload: true });
+                try {
+                    const data = await api.posts.getAll(5);
+                    dispatch({ type: 'SET_POSTS', payload: data.posts });
+                    setToast({ message: `Загружено ${data.posts.length} постов`, type: 'success' });
+                } catch (error) {
+                    setToast({ message: 'Ошибка загрузки', type: 'error' });
+                } finally {
+                    dispatch({ type: 'SET_LOADING', payload: false });
+                }
+            };
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                try {
+                    const newPost = await api.posts.add({ ...formData, userId: 1 });
+                    dispatch({ type: 'ADD_POST', payload: { ...newPost, id: state.posts.length + 1 } });
+                    setShowForm(false);
+                    setFormData({ title: '', body: '' });
+                    setToast({ message: 'Пост опубликован!', type: 'success' });
+                } catch (error) {
+                    setToast({ message: 'Ошибка: ' + error.message, type: 'error' });
+                }
+            };
+
+            return React.createElement('main', { className: 'max-w-6xl mx-auto p-8' },
+                React.createElement('section', { className: 'bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-xl mb-8' },
+                    React.createElement('header', { className: 'flex items-center justify-between mb-6 pb-4 border-b-4 border-indigo-600' },
+                        React.createElement('h2', { className: 'text-3xl font-bold text-indigo-600 dark:text-indigo-400' },
+                            React.createElement('i', { className: 'fas fa-newspaper mr-3' }), 'Посты о РХТУ'
+                        ),
+                        React.createElement('span', { className: 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-bold' },
+                            state.posts.length + ' постов'
+                        )
+                    ),
+                    React.createElement('div', { className: 'flex gap-4 mb-6' },
+                        React.createElement(Button, { onClick: loadPosts, variant: 'success' },
+                            React.createElement('i', { className: 'fas fa-download mr-2' }), 'Загрузить'
+                        ),
+                        React.createElement(Button, { onClick: () => setShowForm(!showForm), variant: 'warning' },
+                            React.createElement('i', { className: 'fas fa-plus mr-2' }), 'Создать пост'
+                        )
+                    ),
+                    showForm && React.createElement('form', { onSubmit: handleSubmit, className: 'bg-gray-50 dark:bg-gray-700 p-6 rounded-xl mb-6 space-y-4' },
+                        React.createElement('input', { type: 'text', placeholder: 'Заголовок', value: formData.title,
+                            onChange: (e) => setFormData({ ...formData, title: e.target.value }),
+                            className: 'w-full p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white', required: true
+                        }),
+                        React.createElement('textarea', { placeholder: 'Текст поста', value: formData.body, rows: 4,
+                            onChange: (e) => setFormData({ ...formData, body: e.target.value }),
+                            className: 'w-full p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white', required: true
+                        }),
+                        React.createElement(Button, { type: 'submit', variant: 'primary' },
+                            React.createElement('i', { className: 'fas fa-save mr-2' }), 'Опубликовать'
+                        )
+                    ),
+                    state.loading && React.createElement('div', { className: 'text-center py-8' },
+                        React.createElement('div', { className: 'skeleton h-12 w-32 mx-auto rounded' })
+                    ),
+                    React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
+                        state.posts.map(post => React.createElement('article', { key: post.id, className: 'bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl p-6 card-hover' },
+                            React.createElement('h3', { className: 'text-xl font-bold mb-3 dark:text-white' }, post.title),
+                            React.createElement('p', { className: 'text-gray-700 dark:text-gray-300 mb-4' }, post.body),
+                            React.createElement('div', { className: 'flex gap-4 pt-4 border-t border-gray-200 dark:border-gray-600 text-sm text-gray-500 dark:text-gray-400' },
+                                React.createElement('span', null, React.createElement('i', { className: 'fas fa-heart text-red-500 mr-1' }), post.reactions?.likes || 0),
+                                React.createElement('span', null, React.createElement('i', { className: 'fas fa-clock mr-1' }), new Date(post.createdAt || Date.now()).toLocaleDateString())
+                            )
+                        ))
+                    )
+                ),
+                toast && React.createElement(Toast, { ...toast, onClose: () => setToast(null) })
+            );
+        };
+
+        // MAIN APP
+        const App = () => {
+            const [currentPage, setPage] = useState('home');
+
+            useEffect(() => {
+                const handleKeyPress = (e) => {
+                    if (e.ctrlKey) {
+                        switch(e.key.toLowerCase()) {
+                            case 'h': e.preventDefault(); setPage('home'); break;
+                            case 'u': e.preventDefault(); setPage('users'); break;
+                            case 'p': e.preventDefault(); setPage('products'); break;
+                            case 'o': e.preventDefault(); setPage('posts'); break;
+                            case 'd': e.preventDefault(); document.querySelector('[title*="тему"]')?.click(); break;
+                        }
+                    }
+                };
+                window.addEventListener('keydown', handleKeyPress);
+                return () => window.removeEventListener('keydown', handleKeyPress);
+            }, []);
+
+            const renderPage = () => {
+                switch(currentPage) {
+                    case 'home': return React.createElement(HomePage, { setPage });
+                    case 'users': return React.createElement(UsersPage);
+                    case 'products': return React.createElement(ProductsPage);
+                    case 'posts': return React.createElement(PostsPage);
+                    default: return React.createElement(HomePage, { setPage });
+                }
+            };
+
+            return React.createElement(AppProvider, null,
+                React.createElement('div', { className: 'min-h-screen' },
+                    React.createElement(Header),
+                    React.createElement(Navigation, { currentPage, setPage }),
+                    renderPage(),
+                    React.createElement('footer', { className: 'text-center text-white py-8 mt-12 bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-gray-800 dark:to-gray-900' },
+                        React.createElement('p', null,
+                            React.createElement('i', { className: 'fas fa-code mr-2' }),
+                            'Лабораторная работа №7 | React PRO | 2026'
+                        ),
+                        React.createElement('p', { className: 'text-sm mt-2 opacity-80' },
+                            '🎁 Бонусы: CAPTCHA, Корзина, Тёмная тема, Поиск, Горячие клавиши'
+                        )
+                    )
+                )
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(App));
+    </script>
+</body>
+</html>
