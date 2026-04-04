@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лабораторная работа №6 — Работа с REST API</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        :root {
+            --primary: #6366f1; --primary-dark: #4f46e5; --secondary: #ec4899;
+            --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+            --dark: #1e293b; --light: #f8fafc; --gray: #64748b;
+            --shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .site-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            position: sticky; top: 0; z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .site-header hgroup { text-align: center; padding: 1rem 0 0.5rem; }
+        .site-header h1 { font-size: 1.5rem; color: var(--primary); }
+        .site-header p { font-size: 0.85rem; color: var(--gray); }
+
+        .site-nav ul {
+            list-style: none; display: flex; justify-content: center;
+            gap: 1rem; padding: 0.5rem 1rem; flex-wrap: wrap;
+        }
+
+        .site-nav a {
+            text-decoration: none; color: var(--dark); font-weight: 600;
+            padding: 0.5rem 1rem; border-radius: 2rem;
+            transition: all 0.3s; display: flex; align-items: center; gap: 0.4rem;
+        }
+
+        .site-nav a:hover, .site-nav a:focus {
+            background: var(--primary); color: white;
+            transform: translateY(-2px); box-shadow: 0 5px 15px rgba(99,102,241,0.3);
+        }
+
+        main { max-width: 1200px; margin: 0 auto; padding: 2rem 1rem; }
+
+        .page-title {
+            text-align: center; color: white; margin: 2rem 0 3rem;
+            font-size: 2.5rem; font-weight: 700; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .page-title span { display: block; font-size: 1rem; font-weight: 400; opacity: 0.9; margin-top: 0.5rem; }
+
+        .stats {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem; margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white; padding: 1.25rem; border-radius: 1rem;
+            text-align: center; box-shadow: var(--shadow);
+        }
+
+        .stat-value { font-size: 1.75rem; font-weight: 700; display: block; }
+        .stat-label { font-size: 0.85rem; opacity: 0.95; }
+
+        section.api-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 1.5rem; padding: 2rem;
+            margin-bottom: 2rem; box-shadow: var(--shadow);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        section.api-section header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding-bottom: 1rem; margin-bottom: 1.5rem;
+            border-bottom: 3px solid var(--primary);
+        }
+
+        section.api-section h2 { color: var(--primary); font-size: 1.5rem; }
+
+        .api-badge {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white; padding: 0.25rem 0.75rem; border-radius: 1rem;
+            font-size: 0.75rem; font-weight: 600;
+        }
+
+        .btn-group { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+
+        .btn {
+            background: var(--primary); color: white; border: none;
+            padding: 0.75rem 1.25rem; border-radius: 0.75rem;
+            cursor: pointer; font-weight: 600; font-size: 0.95rem;
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            transition: all 0.3s; box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+        }
+
+        .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(99,102,241,0.4); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        .btn-get { background: var(--success); }
+        .btn-post { background: var(--warning); color: var(--dark); }
+        .btn-put { background: #3b82f6; }
+        .btn-delete { background: var(--danger); }
+        .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.85rem; }
+
+        .btn-retry {
+            background: var(--danger);
+            color: white;
+            margin-top: 1rem;
+            border: 2px solid var(--danger);
+        }
+        .btn-retry:hover {
+            background: white;
+            color: var(--danger);
+        }
+
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.4rem; font-weight: 600; font-size: 0.9rem; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0;
+            border-radius: 0.75rem; font-size: 1rem; font-family: inherit;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+        }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+        .cards-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.25rem; margin-top: 1rem;
+        }
+
+        article.card {
+            background: white; border-radius: 1rem; overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: flex; flex-direction: column;
+        }
+
+        article.card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.12); }
+
+        figure.card-media { margin: 0; height: 180px; overflow: hidden; background: linear-gradient(135deg, #667eea, #764ba2); }
+        figure.card-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        .card-body { padding: 1.25rem; flex: 1; display: flex; flex-direction: column; }
+        .card-body h3 { font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--dark); }
+        .card-body p { color: var(--gray); font-size: 0.9rem; margin-bottom: 0.75rem; flex: 1; }
+
+        .card-meta {
+            display: flex; gap: 1rem; padding-top: 0.75rem;
+            border-top: 1px solid #e2e8f0; font-size: 0.85rem; color: var(--gray);
+        }
+        .card-meta span { display: flex; align-items: center; gap: 0.25rem; }
+
+        .card-actions {
+            display: flex; gap: 0.5rem; padding: 0 1.25rem 1.25rem;
+        }
+
+        .result {
+            background: white; border-radius: 1rem; padding: 1.25rem;
+            margin-top: 1rem; border-left: 4px solid var(--primary);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .result.success { border-left-color: var(--success); background: #f0fdf4; }
+        .result.error { 
+            border-left-color: var(--danger); 
+            background: #fef2f2; 
+            border: 2px solid var(--danger);
+            padding: 2rem;
+            text-align: center;
+        }
+        .result h3 { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; font-size: 1.25rem; justify-content: center; }
+
+        /* CAPTCHA STYLES */
+        .captcha-container {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-top: 1rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border: 2px solid #4285f4;
+        }
+        
+        .captcha-header {
+            background: #4285f4;
+            color: white;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .captcha-header h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .captcha-header p {
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+        
+        .captcha-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .captcha-item {
+            position: relative;
+            aspect-ratio: 1;
+            border: 3px solid #ddd;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #f0f0f0;
+        }
+        
+        .captcha-item:hover {
+            transform: scale(0.98);
+            border-color: #999;
+        }
+        
+        .captcha-item.selected {
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 2px white, 0 0 0 4px #1a73e8;
+        }
+        
+        .captcha-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        
+        .captcha-item .checkmark {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.5rem;
+            width: 2rem;
+            height: 2rem;
+            background: #1a73e8;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            z-index: 1;
+        }
+        
+        .captcha-item.selected .checkmark {
+            display: flex;
+        }
+        
+        .captcha-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+        
+        .captcha-verify {
+            background: #1a73e8;
+            color: white;
+            padding: 0.875rem 2rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .captcha-verify:hover {
+            background: #1557b0;
+            transform: translateY(-1px);
+        }
+        
+        .captcha-skip {
+            background: #f1f3f4;
+            color: #3c4043;
+            padding: 0.875rem 2rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .captcha-skip:hover {
+            background: #e8eaed;
+        }
+
+        .loading-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px); display: none;
+            justify-content: center; align-items: center; z-index: 9999;
+            flex-direction: column; gap: 1rem;
+        }
+        .loading-overlay.active { display: flex; }
+        .spinner {
+            width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.3);
+            border-top-color: white; border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .toast-container {
+            position: fixed; top: 100px; right: 1rem; z-index: 10000;
+            display: flex; flex-direction: column; gap: 0.75rem;
+        }
+        .toast {
+            background: white; padding: 1rem 1.25rem; border-radius: 0.75rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: flex;
+            align-items: center; gap: 0.75rem; min-width: 280px;
+            animation: slideIn 0.3s ease; border-left: 4px solid var(--primary);
+        }
+        .toast.success { border-left-color: var(--success); }
+        .toast.error { border-left-color: var(--danger); }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        .modal {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px); z-index: 2000;
+            justify-content: center; align-items: center; padding: 1rem;
+        }
+        .modal.active { display: flex; }
+        .modal-dialog {
+            background: white; border-radius: 1.5rem; padding: 2rem;
+            max-width: 550px; width: 100%; max-height: 90vh; overflow-y: auto;
+            animation: modalIn 0.3s ease; box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+        }
+        @keyframes modalIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #e2e8f0;
+        }
+        .modal-close {
+            background: none; border: none; font-size: 1.5rem; cursor: pointer;
+            color: var(--gray); width: 36px; height: 36px; border-radius: 50%;
+            display: grid; place-items: center; transition: all 0.3s;
+        }
+        .modal-close:hover { background: #f1f5f9; color: var(--danger); }
+
+        .selectable-list {
+            display: flex; flex-direction: column; gap: 0.5rem;
+            max-height: 250px; overflow-y: auto; margin-bottom: 1rem;
+        }
+        .selectable-item {
+            padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 0.75rem;
+            cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 0.75rem;
+        }
+        .selectable-item:hover { border-color: var(--primary); background: #f8fafc; }
+        .selectable-item.selected { border-color: var(--primary); background: #eef2ff; }
+
+        .site-footer {
+            text-align: center; color: white; padding: 2rem 1rem;
+            margin-top: 3rem; font-size: 0.9rem; opacity: 0.95;
+        }
+
+        @media (max-width: 768px) {
+            .page-title { font-size: 1.75rem; }
+            .form-row { grid-template-columns: 1fr; }
+            .cards-grid { grid-template-columns: 1fr; }
+            .site-nav ul { gap: 0.5rem; }
+            section.api-section { padding: 1.5rem; }
+            .captcha-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay" aria-live="polite">
+        <div class="spinner" role="status"></div>
+        <div class="loading-text">Подключение к серверу...</div>
+    </div>
+
+    <div class="toast-container" id="toastContainer" aria-live="assertive"></div>
+
+    <div class="modal" id="modal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal-dialog">
+            <header class="modal-header">
+                <h3 id="modalTitle">Заголовок</h3>
+                <button class="modal-close" onclick="closeModal()" aria-label="Закрыть">&times;</button>
+            </header>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <header class="site-header">
+        <hgroup>
+            <h1><i class="fas fa-flask"></i> Лабораторная работа №6</h1>
+            <p>Профессиональная работа с REST API</p>
+        </hgroup>
+        <nav class="site-nav" aria-label="Основная навигация">
+            <ul>
+                <li><a href="#users"><i class="fas fa-users"></i> Пользователи</a></li>
+                <li><a href="#products"><i class="fas fa-shopping-bag"></i> Товары</a></li>
+                <li><a href="#posts"><i class="fas fa-newspaper"></i> Посты РХТУ</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <h2 class="page-title">
+            <i class="fas fa-code"></i> Работа с API
+            <span>GET • POST • PUT • DELETE</span>
+        </h2>
+
+        <aside class="stats" aria-label="Статистика">
+            <div class="stat-card">
+                <span class="stat-value" id="totalUsers">0</span>
+                <span class="stat-label">Пользователей</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value" id="totalProducts">0</span>
+                <span class="stat-label">Товаров</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value" id="totalPosts">0</span>
+                <span class="stat-label">Постов</span>
+            </div>
+        </aside>
+
+        <section id="users" class="api-section" aria-labelledby="users-heading">
+            <header>
+                <h2 id="users-heading"><i class="fas fa-users"></i> DummyJSON Users</h2>
+                <span class="api-badge">CRUD</span>
+            </header>
+            
+            <div class="btn-group">
+                <button class="btn btn-get" id="btnGetUsers" onclick="getUsers()">
+                    <i class="fas fa-download"></i> Загрузить
+                </button>
+                <button class="btn btn-post" onclick="openUserModal('create')">
+                    <i class="fas fa-plus"></i> Создать
+                </button>
+            </div>
+            <div id="usersResult" role="region" aria-live="polite"></div>
+        </section>
+
+        <section id="products" class="api-section" aria-labelledby="products-heading">
+            <header>
+                <h2 id="products-heading"><i class="fas fa-shopping-bag"></i> Store API</h2>
+                <span class="api-badge">GET • POST • PUT</span>
+            </header>
+            
+            <div class="btn-group">
+                <button class="btn btn-get" id="btnGetProducts" onclick="getProducts()">
+                    <i class="fas fa-list"></i> Все товары
+                </button>
+                <button class="btn btn-get" id="btnClothing" onclick="loadClothingWithCaptcha()">
+                    <i class="fas fa-tshirt"></i> Одежда
+                </button>
+                <button class="btn btn-get" onclick="getProductsByCategory('electronics')">
+                    <i class="fas fa-laptop"></i> Электроника
+                </button>
+                <button class="btn btn-post" onclick="openProductModal('create')">
+                    <i class="fas fa-plus"></i> Добавить
+                </button>
+            </div>
+            <div id="productsResult" role="region" aria-live="polite"></div>
+        </section>
+
+        <section id="posts" class="api-section" aria-labelledby="posts-heading">
+            <header>
+                <h2 id="posts-heading"><i class="fas fa-newspaper"></i> Посты о РХТУ</h2>
+                <span class="api-badge">localStorage</span>
+            </header>
+            
+            <div class="btn-group">
+                <button class="btn btn-get" id="btnGetPosts" onclick="getPosts()">
+                    <i class="fas fa-download"></i> Загрузить
+                </button>
+                <button class="btn btn-post" onclick="openPostModal()">
+                    <i class="fas fa-plus"></i> Создать пост
+                </button>
+                <button class="btn btn-delete" onclick="openDeleteModal()">
+                    <i class="fas fa-trash"></i> Удалить
+                </button>
+            </div>
+            <div id="postsResult" role="region" aria-live="polite"></div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <p><i class="fas fa-code"></i> Лабораторная работа №6 | Работа с REST API | 2026</p>
+    </footer>
+
+    <script>
+        let usersData = [], productsData = [], postsData = [], isProcessing = false;
+        let showClothingError = true;
+        let captchaCallback = null;
+
+        function showToast(msg, type = 'success') {
+            const c = document.getElementById('toastContainer');
+            const t = document.createElement('div');
+            t.className = `toast ${type}`;
+            const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle' };
+            t.innerHTML = `<i class="fas ${icons[type]}"></i><span>${msg}</span>`;
+            c.appendChild(t);
+            setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(100%)'; setTimeout(() => t.remove(), 300); }, 2500);
+        }
+
+        function showLoading(text = 'Загрузка...') {
+            document.querySelector('.loading-text').textContent = text;
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+        function hideLoading() { document.getElementById('loadingOverlay').classList.remove('active'); }
+
+        function openModal(title, content) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalBody').innerHTML = content;
+            document.getElementById('modal').classList.add('active');
+            document.getElementById('modal').setAttribute('aria-hidden', 'false');
+        }
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+            document.getElementById('modal').setAttribute('aria-hidden', 'true');
+        }
+        document.getElementById('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+
+        function updateStats() {
+            document.getElementById('totalUsers').textContent = usersData.length;
+            document.getElementById('totalProducts').textContent = productsData.length;
+            document.getElementById('totalPosts').textContent = postsData.length;
+        }
+
+        function renderError(containerId, message, retryFunctionCall) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = `
+                <div class="result error">
+                    <h3><i class="fas fa-exclamation-circle"></i> Ошибка соединения</h3>
+                    <p style="margin-bottom: 1.5rem; font-size: 1.1rem;">${message}</p>
+                    <button class="btn btn-retry" onclick="${retryFunctionCall}">
+                        <i class="fas fa-sync-alt"></i> Попробовать снова
+                    </button>
+                </div>
+            `;
+        }
+
+        // CAPTCHA SYSTEM - OPTIMIZED FAST IMAGES
+        function showCaptcha(targetObject, callback) {
+            captchaCallback = callback;
+            const container = document.getElementById(targetObject);
+            
+            // ОПТИМИЗИРОВАННЫЕ БЫСТРЫЕ ССЫЛКИ (200px)
+            const images = [
+                // СО СВЕТОФОРАМИ (4 шт)
+                { url: 'https://images.unsplash.com/photo-1565103058368-89b971781f5f?auto=format&fit=crop&w=200&h=200&q=60', hasTarget: true, label: 'Светофор' },
+                { url: 'https://images.unsplash.com/photo-1574593087834-84e0a6a0d85d?auto=format&fit=crop&w=200&h=200&q=60', hasTarget: true, label: 'Светофор' },
+                { url: 'https://images.unsplash.com/photo-1485627941532-a9030b00879a?auto=format&fit=crop&w=200&h=200&q=60', hasTarget: true, label: 'Светофор' },
+                { url: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=200&h=200&q=60', hasTarget: true, label: 'Светофор' },
+                
+                // БЕЗ СВЕТОФОРОВ (5 шт)
+                { url: 'https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&w=200&h=200&q=60', hasTarget: false, label: 'Дорога' },
+                { url: 'https://images.unsplash.com/photo-1519810755548-39de21724b90?auto=format&fit=crop&w=200&h=200&q=60', hasTarget: false, label: 'Улица' },
+                { url: 'https://images.unsplash.com/photo-1517163360542-c2a78e3a639e?auto=format&fit=crop&w=200&h=200&q=60', hasTarget: false, label: 'Шоссе' },
+                { url: 'https://images.unsplash.com/photo-1520699697851-3dc68aa3a474?auto=format&fit=crop&w=200&h=200&q=60', hasTarget: false, label: 'Город' },
+                { url: 'https://images.unsplash.com/photo-1469334031218-e382ef7b7b7b?auto=format&fit=crop&w=200&h=200&q=60', hasTarget: false, label: 'Пейзаж' }
+            ];
+            
+            // Перемешиваем
+            images.sort(() => Math.random() - 0.5);
+            
+            let html = `
+                <div class="captcha-container">
+                    <div class="captcha-header">
+                        <h3><i class="fas fa-shield-alt"></i> Проверка безопасности</h3>
+                        <p>Выберите все квадраты, в которых изображены <strong>светофоры</strong></p>
+                    </div>
+                    <div class="captcha-grid">
+            `;
+            
+            images.forEach((img, idx) => {
+                html += `
+                    <div class="captcha-item" data-index="${idx}" data-correct="${img.hasTarget}" onclick="toggleCaptchaItem(this)" title="${img.label}">
+                        <img src="${img.url}" alt="${img.label}" loading="lazy" onerror="this.src='https://via.placeholder.com/200x200/4285f4/ffffff?text=${encodeURIComponent(img.label)}'">
+                        <div class="checkmark">✓</div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                    </div>
+                    <div class="captcha-buttons">
+                        <button class="captcha-skip" onclick="skipCaptcha()">Пропустить</button>
+                        <button class="captcha-verify" onclick="verifyCaptcha()">
+                            <i class="fas fa-check"></i> Подтвердить
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+
+        function toggleCaptchaItem(element) {
+            element.classList.toggle('selected');
+        }
+
+        function skipCaptcha() {
+            document.getElementById('productsResult').innerHTML = '';
+            showToast('Пропущено', 'warning');
+        }
+
+        // PRANK CAPTCHA - Even if correct, it won't open!
+        function verifyCaptcha() {
+            const selected = document.querySelectorAll('.captcha-item.selected');
+            const correct = document.querySelectorAll('.captcha-item[data-correct="true"]');
+            const incorrectSelected = document.querySelectorAll('.captcha-item.selected[data-correct="false"]');
+            const notSelectedCorrect = document.querySelectorAll('.captcha-item:not(.selected)[data-correct="true"]');
+            
+            // CHECK IF CORRECT
+            if (incorrectSelected.length === 0 && notSelectedCorrect.length === 0 && selected.length === correct.length) {
+                // CORRECT - BUT PRANK ANYWAY! 😈
+                const pranks = [
+                    '🤣 А я всё равно не откроюсь!',
+                    '😅 Почти! Но нет!',
+                    '🙃 Облом! Попробуй ещё раз...',
+                    '🤪 Ха-ха! Не угадал!',
+                    '😎 Nice try! Но фиг тебе!',
+                    '🎭 Думал легко будет? Нет!',
+                    '💀 Тест на прочность, а не на внимательность!',
+                    '🎪 Цирк уехал, а клоуны остались!',
+                    '🎯 Мимо! Попробуй угадать!',
+                    '🤷‍♂️ Ну нет! Не сегодня!'
+                ];
+                
+                const randomPrank = pranks[Math.floor(Math.random() * pranks.length)];
+                showToast(randomPrank, 'error');
+                
+                // Clear selection
+                selected.forEach(el => el.classList.remove('selected'));
+                
+                // Reshuffle images
+                reshuffleCaptcha();
+                
+            } else {
+                // WRONG - HONESTLY SAY SO
+                showToast('Неправильно! Выберите все светофоры.', 'error');
+                selected.forEach(el => el.classList.remove('selected'));
+            }
+        }
+
+        function reshuffleCaptcha() {
+            // Reshuffle images randomly
+            const grid = document.querySelector('.captcha-grid');
+            if (!grid) return;
+            
+            const items = Array.from(grid.querySelectorAll('.captcha-item'));
+            items.sort(() => Math.random() - 0.5);
+            items.forEach(item => grid.appendChild(item));
+        }
+
+        function loadClothingWithCaptcha() {
+            if (showClothingError) {
+                showLoading('Подключение к серверу...');
+                setTimeout(() => {
+                    hideLoading();
+                    renderError('productsResult', 
+                        'Ошибка сети: Превышено время ожидания (504 Gateway Timeout).', 
+                        'showCaptchaAndLoad()'
+                    );
+                    showClothingError = false;
+                    showToast('Ошибка соединения', 'error');
+                }, 1500);
+            }
+        }
+
+        function showCaptchaAndLoad() {
+            showCaptcha('productsResult', () => {
+                loadClothingCategory('women\'s clothing');
+            });
+        }
+
+        async function getUsers() {
+            if (isProcessing) return;
+            isProcessing = true;
+            const btn = document.getElementById('btnGetUsers'); btn.disabled = true;
+            try {
+                showLoading('Загрузка пользователей...');
+                const res = await fetch('https://dummyjson.com/users?limit=10');
+                if (!res.ok) throw new Error('Ошибка сети');
+                const data = await res.json();
+                usersData = data.users;
+                
+                let html = '<div class="cards-grid">';
+                usersData.forEach(u => {
+                    html += `<article class="card">
+                        <figure class="card-media"><img src="https://i.pravatar.cc/300?u=${u.id}" alt="${u.firstName} ${u.lastName}"></figure>
+                        <div class="card-body">
+                            <h3>${u.firstName} ${u.lastName}</h3>
+                            <p><i class="fas fa-envelope"></i> ${u.email}</p>
+                            <p><i class="fas fa-briefcase"></i> ${u.company.title}</p>
+                            <div class="card-meta"><span><i class="fas fa-birthday-cake"></i> ${u.age}</span><span><i class="fas fa-map-marker-alt"></i> ${u.address.city}</span></div>
+                        </div>
+                    </article>`;
+                });
+                html += '</div>';
+                document.getElementById('usersResult').innerHTML = `<div class="result success"><h3><i class="fas fa-check"></i> Загружено: ${usersData.length}</h3>${html}</div>`;
+                updateStats(); showToast('Пользователи загружены');
+            } catch (e) {
+                document.getElementById('usersResult').innerHTML = `<div class="result error"><h3><i class="fas fa-exclamation"></i> Ошибка</h3><p>${e.message}</p></div>`;
+                showToast(e.message, 'error');
+            } finally { hideLoading(); btn.disabled = false; isProcessing = false; }
+        }
+
+        function openUserModal(mode) {
+            const isCreate = mode === 'create';
+            const content = `
+                <form onsubmit="handleUserSubmit(event, '${mode}')">
+                    <div class="form-row">
+                        <div class="form-group"><label>Имя*</label><input type="text" name="firstName" required></div>
+                        <div class="form-group"><label>Фамилия*</label><input type="text" name="lastName" required></div>
+                    </div>
+                    <div class="form-group"><label>Email*</label><input type="email" name="email" required></div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Возраст</label><input type="number" name="age" min="18" max="100"></div>
+                        <div class="form-group"><label>Телефон</label><input type="tel" name="phone"></div>
+                    </div>
+                    <div class="form-group"><label>Город</label><input type="text" name="city"></div>
+                    <button type="submit" class="btn ${isCreate ? 'btn-post' : 'btn-put'}" style="width:100%">
+                        <i class="fas fa-${isCreate ? 'plus' : 'save'}"></i> ${isCreate ? 'Создать' : 'Сохранить'}
+                    </button>
+                </form>`;
+            openModal(isCreate ? 'Новый пользователь' : 'Редактирование', content);
+        }
+
+        async function handleUserSubmit(e, mode) {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            const data = {
+                firstName: fd.get('firstName'), lastName: fd.get('lastName'), email: fd.get('email'),
+                age: +fd.get('age') || 25, phone: fd.get('phone'),
+                address: { city: fd.get('city') || 'Москва', country: 'Россия' },
+                company: { name: 'ООО Пример', title: fd.get('position') || 'Специалист' }
+            };
+            try {
+                showLoading('Сохранение...');
+                const url = mode === 'create' ? 'https://dummyjson.com/users/add' : 'https://dummyjson.com/users/1';
+                const res = await fetch(url, { method: mode === 'create' ? 'POST' : 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                if (!res.ok) throw new Error('Ошибка');
+                closeModal(); showToast(mode === 'create' ? 'Создан!' : 'Обновлён!');
+                if (mode === 'create') { usersData.push({ ...await res.json(), id: usersData.length + 1 }); updateStats(); }
+            } catch (err) { showToast(err.message, 'error'); } finally { hideLoading(); }
+        }
+
+        async function getProducts() {
+            if (isProcessing) return; isProcessing = true;
+            const btn = document.getElementById('btnGetProducts'); btn.disabled = true;
+            try {
+                showLoading('Загрузка...');
+                const res = await fetch('https://fakestoreapi.com/products?limit=8');
+                if (!res.ok) throw new Error('Ошибка');
+                productsData = await res.json();
+                renderProducts(productsData);
+                updateStats(); showToast(`Загружено: ${productsData.length}`);
+            } catch (e) { showToast(e.message, 'error'); }
+            finally { hideLoading(); btn.disabled = false; isProcessing = false; }
+        }
+
+        async function getProductsByCategory(cat) {
+            if (isProcessing) return;
+            isProcessing = true;
+            try {
+                showLoading(`Загрузка категории...`);
+                const res = await fetch(`https://fakestoreapi.com/products/category/${cat}`);
+                if (!res.ok) throw new Error('Ошибка');
+                productsData = await res.json();
+                renderProducts(productsData);
+                showToast(`Найдено: ${productsData.length}`);
+            } catch (e) { showToast(e.message, 'error'); }
+            finally { hideLoading(); isProcessing = false; }
+        }
+
+        async function loadClothingCategory(cat) {
+            isProcessing = true;
+            try {
+                showLoading('Загрузка одежды...');
+                const res = await fetch(`https://fakestoreapi.com/products/category/${cat}`);
+                if (!res.ok) throw new Error('Ошибка');
+                productsData = await res.json();
+                renderProducts(productsData);
+                showToast(`Загружено товаров: ${productsData.length}`);
+            } catch (e) { showToast(e.message, 'error'); }
+            finally { hideLoading(); isProcessing = false; }
+        }
+
+        function renderProducts(list) {
+            let html = '<div class="cards-grid">';
+            list.forEach(p => {
+                html += `<article class="card">
+                    <figure class="card-media"><img src="${p.image}" alt="${p.title}" onerror="this.src='https://via.placeholder.com/300x180/667eea/ffffff?text=No+Image'"></figure>
+                    <div class="card-body">
+                        <h3>${p.title.slice(0, 45)}${p.title.length > 45 ? '...' : ''}</h3>
+                        <p style="color:var(--primary);font-weight:700">${p.price} ₽</p>
+                        <p>${p.description.slice(0, 90)}...</p>
+                        <div class="card-meta"><span><i class="fas fa-star" style="color:gold"></i> ${p.rating.rate}</span><span><i class="fas fa-tag"></i> ${p.category}</span></div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn btn-put btn-sm" onclick="editProduct(${p.id})"><i class="fas fa-edit"></i> Редактировать</button>
+                    </div>
+                </article>`;
+            });
+            html += '</div>';
+            document.getElementById('productsResult').innerHTML = `<div class="result success"><h3><i class="fas fa-check"></i> Товары: ${list.length}</h3>${html}</div>`;
+        }
+
+        function openProductModal() {
+            const content = `
+                <form onsubmit="handleProductSubmit(event)">
+                    <div class="form-group"><label>Название*</label><input type="text" name="title" required></div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Цена*</label><input type="number" name="price" min="1" required></div>
+                        <div class="form-group"><label>Категория*</label>
+                            <select name="category" required>
+                                <option value="electronics">Электроника</option>
+                                <option value="jewelery">Ювелирные</option>
+                                <option value="men's clothing">Мужская одежда</option>
+                                <option value="women's clothing">Женская одежда</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group"><label>Описание</label><textarea name="description" rows="3"></textarea></div>
+                    <button type="submit" class="btn btn-post" style="width:100%"><i class="fas fa-plus"></i> Добавить</button>
+                </form>`;
+            openModal('Новый товар', content);
+        }
+
+        function editProduct(id) {
+            const p = productsData.find(x => x.id === id);
+            if (!p) return;
+            const content = `
+                <form onsubmit="handleProductUpdate(event, ${id})">
+                    <div class="form-group"><label>Название*</label><input type="text" name="title" value="${p.title}" required></div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Цена*</label><input type="number" name="price" value="${p.price}" min="1" required></div>
+                        <div class="form-group"><label>Категория</label><input type="text" name="category" value="${p.category}"></div>
+                    </div>
+                    <button type="submit" class="btn btn-put" style="width:100%"><i class="fas fa-save"></i> Сохранить</button>
+                </form>`;
+            openModal('Редактирование товара', content);
+        }
+
+        async function handleProductSubmit(e) {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            const data = { title: fd.get('title'), price: +fd.get('price'), category: fd.get('category'), description: fd.get('description') || 'Описание', image: 'https://via.placeholder.com/150' };
+            try {
+                showLoading('Добавление...');
+                const res = await fetch('https://fakestoreapi.com/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                if (!res.ok) throw new Error('Ошибка');
+                closeModal(); showToast('Товар добавлен');
+                productsData.push({ ...await res.json(), id: productsData.length + 1 }); updateStats();
+            } catch (err) { showToast(err.message, 'error'); } finally { hideLoading(); }
+        }
+
+        async function handleProductUpdate(e, id) {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            const data = { title: fd.get('title'), price: +fd.get('price'), category: fd.get('category') };
+            try {
+                showLoading('Обновление...');
+                const res = await fetch(`https://fakestoreapi.com/products/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                if (!res.ok) throw new Error('Ошибка');
+                closeModal(); showToast('Обновлено');
+                const idx = productsData.findIndex(x => x.id === id);
+                if (idx !== -1) productsData[idx] = { ...await res.json(), id };
+            } catch (err) { showToast(err.message, 'error'); } finally { hideLoading(); }
+        }
+
+        function initPosts() {
+            const s = localStorage.getItem('rhtu_posts');
+            if (s) postsData = JSON.parse(s);
+            else {
+                postsData = [
+                    { id: 1, title: '🎓 РХТУ — ведущий вуз', body: 'РХТУ им. Менделеева основан в 1898 году.', userId: 1, likes: 45, createdAt: new Date().toISOString() },
+                    { id: 2, title: '🔬 Наука и инновации', body: '150+ лабораторий, реальные проекты для студентов.', userId: 1, likes: 89, createdAt: new Date().toISOString() }
+                ];
+                savePosts();
+            }
+            updateStats();
+        }
+        function savePosts() { localStorage.setItem('rhtu_posts', JSON.stringify(postsData)); updateStats(); }
+
+        async function getPosts() {
+            if (isProcessing) return; isProcessing = true;
+            const btn = document.getElementById('btnGetPosts'); btn.disabled = true;
+            try {
+                showLoading('Загрузка...');
+                try { const r = await fetch('https://dummyjson.com/posts?limit=3'); if (r.ok) postsData = [...(await r.json()).posts, ...postsData]; } catch (_) {}
+                let html = '<div class="cards-grid">';
+                postsData.forEach(p => {
+                    html += `<article class="card">
+                        <div class="card-body">
+                            <h3>${p.title}</h3>
+                            <p>${p.body}</p>
+                            <div class="card-meta"><span><i class="fas fa-heart" style="color:var(--danger)"></i> ${p.likes || p.reactions?.likes || 0}</span><span><i class="fas fa-clock"></i> ${new Date(p.createdAt || Date.now()).toLocaleDateString()}</span></div>
+                        </div>
+                    </article>`;
+                });
+                html += '</div>';
+                document.getElementById('postsResult').innerHTML = `<div class="result success"><h3><i class="fas fa-check"></i> Посты: ${postsData.length}</h3><p style="color:var(--gray);font-size:0.9rem"><i class="fas fa-info-circle"></i> Данные в localStorage</p>${html}</div>`;
+                updateStats(); showToast('Посты загружены');
+            } catch (e) { showToast(e.message, 'error'); }
+            finally { hideLoading(); btn.disabled = false; isProcessing = false; }
+        }
+
+        function openPostModal() {
+            const content = `
+                <form onsubmit="handlePostSubmit(event)">
+                    <div class="form-group"><label>Заголовок*</label><input type="text" name="title" required></div>
+                    <div class="form-group"><label>Текст*</label><textarea name="body" rows="4" required></textarea></div>
+                    <button type="submit" class="btn btn-post" style="width:100%"><i class="fas fa-plus"></i> Опубликовать</button>
+                </form>`;
+            openModal('Новый пост', content);
+        }
+
+        async function handlePostSubmit(e) {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            const post = { id: postsData.length + 1, title: fd.get('title'), body: fd.get('body'), userId: 1, likes: 0, createdAt: new Date().toISOString() };
+            try {
+                showLoading('Публикация...');
+                try { await fetch('https://dummyjson.com/posts/add', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: post.title, body: post.body, userId: post.userId }) }); } catch (_) {}
+                postsData.unshift(post); savePosts(); closeModal(); showToast('Опубликовано'); getPosts();
+            } catch (err) { showToast(err.message, 'error'); } finally { hideLoading(); }
+        }
+
+        function openDeleteModal() {
+            if (!postsData.length) { showToast('Нет постов', 'warning'); return; }
+            let html = '<div class="selectable-list">';
+            postsData.forEach(p => {
+                html += `<label class="selectable-item"><input type="radio" name="delId" value="${p.id}"><div><strong>${p.title}</strong><br><small>${p.body.slice(0, 50)}...</small></div></label>`;
+            });
+            html += `</div><button class="btn btn-delete" onclick="confirmDelete()" style="width:100%"><i class="fas fa-trash"></i> Удалить выбранный</button>`;
+            openModal('Удаление поста', html);
+        }
+
+        async function confirmDelete() {
+            const id = document.querySelector('input[name="delId"]:checked')?.value;
+            if (!id) { showToast('Выберите пост', 'warning'); return; }
+            if (!confirm('Удалить пост?')) return;
+            try {
+                showLoading('Удаление...');
+                try { await fetch(`https://dummyjson.com/posts/${id}`, { method: 'DELETE' }); } catch (_) {}
+                postsData = postsData.filter(p => p.id != id); savePosts(); closeModal(); showToast('Удалено'); getPosts();
+            } catch (e) { showToast(e.message, 'error'); } finally { hideLoading(); }
+        }
+
+        document.querySelectorAll('a[href^="#"]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); document.querySelector(a.getAttribute('href'))?.scrollIntoView({ behavior: 'smooth' }); }));
+        window.addEventListener('load', () => { initPosts(); showToast('Готово к работе'); });
+    </script>
+</body>
+</html>
